@@ -8,16 +8,21 @@ import android.util.Log;
 import com.google.common.util.concurrent.AbstractService;
 
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.DownloadListener;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.GetDataMessage;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerEventListener;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Wallet;
+import org.bitcoinj.core.WalletEventListener;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.script.Script;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,10 +79,14 @@ public class SPVFacade extends AbstractService {
     }
 
     // Wallet kit methods
+    public Wallet getWallet() {
+        return bitcoin.wallet();
+    }
+
     private void initAndStartWalletKit() throws IOException {
         NetworkParameters np = null;
         InputStream inCheckpint = null;
-        if(TEST_NET) {
+        if(TEST_NET == false) {
             np = MainNetParams.get();
             inCheckpint = context.getAssets().open("checkpoints");
         }
@@ -125,5 +134,43 @@ public class SPVFacade extends AbstractService {
         }
 
         return new File(s);
+    }
+
+    public static class WalletEventAdapter implements WalletEventListener {
+
+        @Override
+        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+
+        }
+
+        @Override
+        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+
+        }
+
+        @Override
+        public void onReorganize(Wallet wallet) {
+
+        }
+
+        @Override
+        public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+
+        }
+
+        @Override
+        public void onWalletChanged(Wallet wallet) {
+
+        }
+
+        @Override
+        public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+
+        }
+
+        @Override
+        public void onKeysAdded(List<ECKey> keys) {
+
+        }
     }
 }
