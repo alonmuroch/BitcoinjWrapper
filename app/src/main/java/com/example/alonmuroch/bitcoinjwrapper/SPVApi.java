@@ -62,6 +62,16 @@ public class SPVApi {
         return ret;
     }
 
+    public void encryptWallet(String password) {
+        Wallet w = SPVFacade.sharedInstance().getWallet();
+        w.encrypt(password);
+    }
+
+    public boolean isWalletEncrypted() {
+        Wallet w = SPVFacade.sharedInstance().getWallet();
+        return w.isEncrypted();
+    }
+
     // private
 
     private Address getAddress(int idx) {
@@ -85,18 +95,9 @@ public class SPVApi {
         return w.sendCoins(sr);
     }
 
-    private void encryptWallet(String password) {
-        Wallet w = SPVFacade.sharedInstance().getWallet();
-        w.encrypt(password);
-    }
-
     private void decryptWallet(String password) {
         Wallet w = SPVFacade.sharedInstance().getWallet();
         w.decrypt(password);
     }
 
-    private boolean isWalletEncrypted() {
-        Wallet w = SPVFacade.sharedInstance().getWallet();
-        return w.isEncrypted();
-    }
 }
