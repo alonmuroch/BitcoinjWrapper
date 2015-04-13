@@ -26,6 +26,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.core.WalletEventListener;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -35,34 +36,40 @@ import javax.annotation.Nullable;
 public class MainActivity extends ActionBarActivity {
     static String TAG = "Main";
 
+    SPVFacade spv;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final SPVFacade spv = SPVFacade.sharedInstance();
-        spv.setContext(getApplicationContext());
-        spv.setDownloadListener(new DownloadListener() {
-            @Override
-            protected void progress(final double pct, int blocksSoFar, Date date) {
-                Log.i(TAG, "Blockchain download: " +  pct + "%");
-
-                runOnUiThread(new Runnable() {
+        spv = SPVFacade
+                .sharedInstance()
+                .setContext(getApplicationContext())
+                .setDownloadListener(new DownloadListener() {
                     @Override
-                    public void run() {
-                        ProgressBar progressbar = (ProgressBar) findViewById(R.id.progressBar);
-                        progressbar.setProgress((int) pct);
+                    protected void progress(final double pct, int blocksSoFar, Date date) {
+                        Log.i(TAG, "Blockchain download: " +  pct + "%");
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ProgressBar progressbar = (ProgressBar) findViewById(R.id.progressBar);
+                                progressbar.setProgress((int) pct);
+                            }
+                        });
+
+                    }
+
+                    @Override
+                    protected void doneDownload() {
+
                     }
                 });
-
-            }
-
-            @Override
-            protected void doneDownload() {
-
-            }
-        });
-
+        { // uncomment in case you restore from seed
+            List<String> words = Arrays.asList("proud clutch shock color toy wing slam page bomb journey evidence report".split(" "));
+            spv.restoreFromSeed(words);
+        }
         spv.addListener(new Service.Listener() {
             @Override
             public void running() {
@@ -77,6 +84,8 @@ public class MainActivity extends ActionBarActivity {
 
                         TextView txv3 = (TextView) findViewById(R.id.passphrase);
                         txv3.setText(TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(null)));
+
+                        String ddd = TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(null));
 
                         MainActivity.this.setWalletListener(spv);
                     }
@@ -131,6 +140,13 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void onStop () {
+        //do your stuff here
+        super.onStop();
+
+        spv.doStop();
     }
 
     private void sendExample() throws AddressFormatException, InsufficientMoneyException {
