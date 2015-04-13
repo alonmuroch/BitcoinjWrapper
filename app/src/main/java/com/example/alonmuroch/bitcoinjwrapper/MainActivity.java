@@ -2,6 +2,7 @@ package com.example.alonmuroch.bitcoinjwrapper;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +40,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SPVFacade spv = SPVFacade.sharedInstance();
+        final SPVFacade spv = SPVFacade.sharedInstance();
         spv.setContext(getApplicationContext());
         spv.setDownloadListener(new DownloadListener() {
             @Override
@@ -62,6 +63,30 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        spv.addListener(new Service.Listener() {
+            @Override
+            public void running() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView txv = (TextView) findViewById(R.id.address);
+                        txv.setText(SPVApi.sharedInstance().getFirstAddress().toString());
+
+                        TextView txv2 = (TextView) findViewById(R.id.balance);
+                        txv2.setText("Balance: " + SPVApi.sharedInstance().getBalance().toFriendlyString());
+
+                        TextView txv3 = (TextView) findViewById(R.id.passphrase);
+                        txv3.setText(TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(null)));
+
+                        MainActivity.this.setWalletListener(spv);
+                    }
+                });
+            }
+        }, MoreExecutors.sameThreadExecutor());
+        spv.startAsync();
+    }
+
+    private void setWalletListener(SPVFacade spv) {
         spv.getWallet().addEventListener(new SPVFacade.WalletEventAdapter() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
@@ -84,25 +109,7 @@ public class MainActivity extends ActionBarActivity {
             }
 
         });
-
-        spv.addListener(new Service.Listener() {
-            @Override
-            public void running() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        TextView txv = (TextView) findViewById(R.id.address);
-                        txv.setText(SPVApi.sharedInstance().getFirstAddress().toString());
-
-                        TextView txv2 = (TextView) findViewById(R.id.balance);
-                        txv2.setText("Balance: " + SPVApi.sharedInstance().getBalance().toFriendlyString());
-                    }
-                });
-            }
-        }, MoreExecutors.sameThreadExecutor());
-        spv.startAsync();
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

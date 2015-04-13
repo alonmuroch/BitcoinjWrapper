@@ -1,5 +1,7 @@
 package com.example.alonmuroch.bitcoinjwrapper;
 
+import android.support.annotation.Nullable;
+
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -39,9 +41,29 @@ public class SPVApi {
         return send(address, amount);
     }
 
+    public List<String> getPassphrase(@Nullable String password) {
+        Wallet w = SPVFacade.sharedInstance().getWallet();
+
+        boolean encryptWalletAfterFetchingThePassphrase = false;
+        if(this.isWalletEncrypted()) {
+            if(password == null)
+                throw new IllegalArgumentException("Wallet is encrypted but you didn't provide a password");
+
+            encryptWalletAfterFetchingThePassphrase = true;
+
+            this.decryptWallet(password);
+        }
+
+        List<String> ret = w.getKeyChainSeed().getMnemonicCode();
+
+        if(encryptWalletAfterFetchingThePassphrase)
+            this.encryptWallet(password);
+
+        return ret;
+    }
 
     // private
-    
+
     private Address getAddress(int idx) {
         Wallet w = SPVFacade.sharedInstance().getWallet();
 
@@ -61,5 +83,20 @@ public class SPVApi {
         Wallet w = SPVFacade.sharedInstance().getWallet();
         Wallet.SendRequest sr =  Wallet.SendRequest.to(address, amount);
         return w.sendCoins(sr);
+    }
+
+    private void encryptWallet(String password) {
+        Wallet w = SPVFacade.sharedInstance().getWallet();
+        w.encrypt(password);
+    }
+
+    private void decryptWallet(String password) {
+        Wallet w = SPVFacade.sharedInstance().getWallet();
+        w.decrypt(password);
+    }
+
+    private boolean isWalletEncrypted() {
+        Wallet w = SPVFacade.sharedInstance().getWallet();
+        return w.isEncrypted();
     }
 }
