@@ -67,7 +67,7 @@ public class MainActivity extends ActionBarActivity {
                     }
                 });
         { // uncomment in case you restore from seed/ create new wallet
-            spv.newWalletFromPassphrase("pull common fright dwell size spoken hero boom shoot mutter bruise state");
+            spv.newWalletFromPassphrase(CounterpartyMnemonic.generatePassphrase());
         }
         spv.addListener(new Service.Listener() {
             @Override
