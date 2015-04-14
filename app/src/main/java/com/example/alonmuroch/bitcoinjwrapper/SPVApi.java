@@ -1,5 +1,7 @@
 package com.example.alonmuroch.bitcoinjwrapper;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 
 import org.bitcoinj.core.Address;
@@ -37,8 +39,8 @@ public class SPVApi {
         return w.getBalance();
     }
 
-    public Address getFirstAddress() {
-        return getAddress(0);
+    public Address getFirstAddress(Context context) {
+        return getAddress(context, 0);
     }
 
     public Wallet.SendResult sendToAddress(Address address, Coin amount) throws InsufficientMoneyException {
@@ -79,24 +81,18 @@ public class SPVApi {
 
     // private
 
-    private Address getAddress(int idx) {
+    private Address getAddress(Context context, int idx) {
         Wallet w = SPVFacade.sharedInstance().getWallet();
-        byte[] seed = w.getKeyChainSeed().getSeedBytes();
+        SharedPreferences sharedPref = context.getSharedPreferences("GetGems", Context.MODE_PRIVATE);
+        byte[] pubKey = Hex.decode(sharedPref.getString(SPVFacade.EXTERNAL_CHAIN_KEY_PREFERENCE, null));
+        byte[] chain = Hex.decode(sharedPref.getString(SPVFacade.EXTERNAL_CHAIN_KEY_CHAIN_PREFERENCE, null));
 
         HDKeyDerivation HDKey = null;
 
-        // M
-        DeterministicKey masterkey = HDKey.createMasterPrivateKey(seed);
+        // external chain M/0H/0
+        DeterministicKey externalChain = HDKey.createMasterPubKeyFromBytes(pubKey, chain);
 
-        // 0H
-        ChildNumber purposeIndex = new ChildNumber(KeyChain.KeyPurpose.RECEIVE_FUNDS.ordinal(), true);
-        DeterministicKey purpose = HDKey.deriveChildKey(masterkey, purposeIndex);
-
-        // external chain
-        ChildNumber externalIdx = new ChildNumber(0);
-        DeterministicKey externalChain = HDKey.deriveChildKey(purpose, externalIdx);
-
-        // key
+        // key M/0H/0/idx
         ChildNumber addressIdx = new ChildNumber(idx);
         DeterministicKey key =  HDKey.deriveChildKey(externalChain, addressIdx);
 

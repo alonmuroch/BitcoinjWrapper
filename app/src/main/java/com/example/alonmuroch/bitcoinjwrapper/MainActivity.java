@@ -75,18 +75,19 @@ public class MainActivity extends ActionBarActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        String walletPassword = "asdfasdf";
+
+                        SPVApi.sharedInstance().encryptWallet(walletPassword);
                         TextView txv = (TextView) findViewById(R.id.address);
-                        txv.setText(SPVApi.sharedInstance().getFirstAddress().toString());
+                        txv.setText(SPVApi.sharedInstance().getFirstAddress(getApplicationContext()).toString());
 
                         TextView txv2 = (TextView) findViewById(R.id.balance);
                         txv2.setText("Balance: " + SPVApi.sharedInstance().getBalance().toFriendlyString());
 
                         TextView txv3 = (TextView) findViewById(R.id.passphrase);
-                        txv3.setText(TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(null)));
+                        txv3.setText(TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(walletPassword)));
 
                         MainActivity.this.setWalletListener(spv);
-
-                        SPVApi.sharedInstance().encryptWallet("asdfasdf");
                     }
                 });
             }

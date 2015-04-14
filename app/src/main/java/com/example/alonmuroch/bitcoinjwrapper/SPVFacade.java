@@ -1,6 +1,7 @@
 package com.example.alonmuroch.bitcoinjwrapper;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.provider.Settings;
@@ -20,12 +21,17 @@ import org.bitcoinj.core.PeerEventListener;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.core.WalletEventListener;
+import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChain;
+import org.spongycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +59,10 @@ public class SPVFacade extends AbstractService {
     Context context;
     static String TAG = "SPVFacade";
     static long EARLIASET_APP_RELEASE_UNIX = 1388534400; // 1.1.14
+
+    // Preferences
+    static String EXTERNAL_CHAIN_KEY_PREFERENCE = "EXTERNAL_CHAIN_KEY_PREFERENCE";
+    static String EXTERNAL_CHAIN_KEY_CHAIN_PREFERENCE = "EXTERNAL_CHAIN_KEY_CHAIN_PREFERENCE";
 
     public SPVFacade() {
 
@@ -123,6 +133,8 @@ public class SPVFacade extends AbstractService {
         bitcoin = new WalletAppKit(np, getApplicationDirectory(), "GetGems") {
             @Override
             protected void onSetupCompleted() {
+                SPVFacade.this.saveExternalChainToDefaults(bitcoin.wallet());
+
                 bitcoin.peerGroup().setMaxConnections(11);
                 bitcoin.wallet().setKeychainLookaheadSize(0);
                 bitcoin.wallet().allowSpendingUnconfirmedTransactions();
@@ -191,6 +203,27 @@ public class SPVFacade extends AbstractService {
         List<String> words = Arrays.asList(passphrase.split(" "));
         seedToRestore = new DeterministicSeed(seed, words, creationTime);
         return this;
+    }
+
+    private void saveExternalChainToDefaults(Wallet wallet) {
+        byte[] seed = wallet.getKeyChainSeed().getSeedBytes();
+        HDKeyDerivation HDKey = null;
+        // M
+        DeterministicKey masterkey = HDKey.createMasterPrivateKey(seed);
+
+        // 0H
+        ChildNumber purposeIndex = new ChildNumber(KeyChain.KeyPurpose.RECEIVE_FUNDS.ordinal(), true);
+        DeterministicKey purpose = HDKey.deriveChildKey(masterkey, purposeIndex);
+
+        // external chain
+        ChildNumber externalIdx = new ChildNumber(0);
+        DeterministicKey externalChain = HDKey.deriveChildKey(purpose, externalIdx);
+
+        SharedPreferences sharedPref = context.getSharedPreferences("GetGems", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(EXTERNAL_CHAIN_KEY_PREFERENCE, Hex.toHexString(externalChain.getPubKey()));
+        editor.putString(EXTERNAL_CHAIN_KEY_CHAIN_PREFERENCE, Hex.toHexString(externalChain.getChainCode()));
+        editor.commit();
     }
 
     public static class WalletEventAdapter implements WalletEventListener {
