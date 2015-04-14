@@ -66,9 +66,8 @@ public class MainActivity extends ActionBarActivity {
 
                     }
                 });
-        { // uncomment in case you restore from seed
-            List<String> words = Arrays.asList("proud clutch shock color toy wing slam page bomb journey evidence report".split(" "));
-            spv.restoreFromSeed(words);
+        { // uncomment in case you restore from seed/ create new wallet
+            spv.newWalletFromPassphrase("pull common fright dwell size spoken hero boom shoot mutter bruise state");
         }
         spv.addListener(new Service.Listener() {
             @Override
@@ -85,9 +84,9 @@ public class MainActivity extends ActionBarActivity {
                         TextView txv3 = (TextView) findViewById(R.id.passphrase);
                         txv3.setText(TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(null)));
 
-                        String ddd = TextUtils.join(" ", SPVApi.sharedInstance().getPassphrase(null));
-
                         MainActivity.this.setWalletListener(spv);
+
+                        SPVApi.sharedInstance().encryptWallet("asdfasdf");
                     }
                 });
             }

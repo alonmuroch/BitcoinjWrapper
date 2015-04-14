@@ -12,6 +12,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.KeyChain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -54,7 +55,8 @@ public class SPVApi {
             this.decryptWallet(password);
         }
 
-        List<String> ret = w.getKeyChainSeed().getMnemonicCode();
+        byte[] seed = w.getKeyChainSeed().getSeedBytes();
+        List<String> ret = Arrays.asList(CounterpartyMnemonic.encodeToPassphrase(seed).split(" "));
 
         if(encryptWalletAfterFetchingThePassphrase)
             this.encryptWallet(password);

@@ -3,6 +3,7 @@ package com.example.alonmuroch.bitcoinjwrapper;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.google.common.util.concurrent.AbstractService;
@@ -70,9 +71,12 @@ public class SPVFacade extends AbstractService {
         return this;
     }
 
-    public SPVFacade restoreFromSeed(List<String> words) {
-        seedToRestore = new DeterministicSeed(words, null,"", EARLIASET_APP_RELEASE_UNIX);
-        return this;
+    public SPVFacade resotreFromPassphrase(String passphrase) {
+        return this.setPassphrase(passphrase, EARLIASET_APP_RELEASE_UNIX);
+    }
+
+    public SPVFacade newWalletFromPassphrase(String passphrase) {
+        return this.setPassphrase(passphrase, (System.currentTimeMillis() / 100L));
     }
 
     // Abstract Service Impl
@@ -176,6 +180,12 @@ public class SPVFacade extends AbstractService {
         wallet.setKeychainLookaheadSize(0);
         wallet.saveToFile(f);
         wallet= null;
+    }
+
+    private SPVFacade setPassphrase(String passphrase, long creationTime) {
+        byte[] seed = CounterpartyMnemonic.decodePassphrase(passphrase);
+        seedToRestore = new DeterministicSeed(seed,"", creationTime);
+        return this;
     }
 
     public static class WalletEventAdapter implements WalletEventListener {
