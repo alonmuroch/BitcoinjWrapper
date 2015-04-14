@@ -1,6 +1,6 @@
 package com.example.alonmuroch.bitcoinjwrapper;
 
-import com.subgraph.orchid.encoders.Hex;
+import org.spongycastle.util.encoders.Hex;
 
 /**
  * Created by alonmuroch on 4/14/15.

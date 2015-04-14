@@ -30,6 +30,7 @@ import org.bitcoinj.wallet.DeterministicSeed;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -157,7 +158,10 @@ public class SPVFacade extends AbstractService {
             return null;
         }
 
-        return new File(s + "/GetGemsWallet/");
+        File f =  new File(s + "/wallet/");
+        if(!f.exists())
+            f.mkdir();
+        return f;
     }
 
     private void deleteFolder(File dir) {
@@ -184,7 +188,8 @@ public class SPVFacade extends AbstractService {
 
     private SPVFacade setPassphrase(String passphrase, long creationTime) {
         byte[] seed = CounterpartyMnemonic.decodePassphrase(passphrase);
-        seedToRestore = new DeterministicSeed(seed,"", creationTime);
+        List<String> words = Arrays.asList(passphrase.split(" "));
+        seedToRestore = new DeterministicSeed(seed, words, creationTime);
         return this;
     }
 

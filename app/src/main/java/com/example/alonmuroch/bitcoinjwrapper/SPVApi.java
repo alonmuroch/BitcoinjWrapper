@@ -8,12 +8,15 @@ import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.KeyChain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.spongycastle.util.encoders.Hex;
 
 /**
  * Created by alonmuroch on 4/12/15.
@@ -78,15 +81,25 @@ public class SPVApi {
 
     private Address getAddress(int idx) {
         Wallet w = SPVFacade.sharedInstance().getWallet();
+        byte[] seed = w.getKeyChainSeed().getSeedBytes();
 
-        ChildNumber purpose = new ChildNumber(KeyChain.KeyPurpose.RECEIVE_FUNDS.ordinal(), true);
-        ChildNumber type = new ChildNumber(0);
+        HDKeyDerivation HDKey = null;
+
+        // M
+        DeterministicKey masterkey = HDKey.createMasterPrivateKey(seed);
+
+        // 0H
+        ChildNumber purposeIndex = new ChildNumber(KeyChain.KeyPurpose.RECEIVE_FUNDS.ordinal(), true);
+        DeterministicKey purpose = HDKey.deriveChildKey(masterkey, purposeIndex);
+
+        // external chain
+        ChildNumber externalIdx = new ChildNumber(0);
+        DeterministicKey externalChain = HDKey.deriveChildKey(purpose, externalIdx);
+
+        // key
         ChildNumber addressIdx = new ChildNumber(idx);
+        DeterministicKey key =  HDKey.deriveChildKey(externalChain, addressIdx);
 
-        List<ChildNumber> cp = new ArrayList<>();
-        cp.add(purpose); cp.add(type); cp.add(addressIdx);
-
-        DeterministicKey key = w.getKeyByPath(cp);
         Address address = key.toAddress(w.getParams());
         return address;
     }
